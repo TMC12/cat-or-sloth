@@ -142,6 +142,26 @@
             color: #333;
         }
 
+        .feedback-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.1);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #666;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .feedback-link:hover {
+            background: rgba(0,0,0,0.2);
+            color: #333;
+        }
+
         @media (max-width: 600px) {
             h1 {
                 font-size: 1.8rem;
@@ -168,6 +188,7 @@
 </head>
 <body>
     <button class="lang-switch" id="langSwitch" onclick="toggleLanguage()">中文 | English</button>
+    <button class="feedback-link" id="feedbackLink" onclick="copyEmail()">📧 联系我：littlet31@foxmail.com</button>
     <div class="container">
         <h1 id="pageTitle">反应速度测试</h1>
         <p class="subtitle" id="pageSubtitle">测试你的反应速度有多快！</p>
@@ -206,7 +227,9 @@
                 cat: '电竞选手水平，可以打职业了。',
                 eagle: '眼疾手快，超出平均水平。',
                 human: '普通反应，继续加油。',
-                sloth: '你是不是在喝茶的时候点的？'
+                sloth: '你是不是在喝茶的时候点的？',
+                feedback: '📧 联系我：littlet31@foxmail.com',
+                copied: '✅ 已复制邮箱地址'
             },
             en: {
                 title: 'Reaction Speed Test',
@@ -228,7 +251,9 @@
                 cat: 'Pro gamer level. Time to go competitive.',
                 eagle: 'Sharp reflexes. Above average.',
                 human: 'Average reaction. Keep practicing.',
-                sloth: 'Were you sipping tea when you clicked?'
+                sloth: 'Were you sipping tea when you clicked?',
+                feedback: '📧 Contact: littlet31@foxmail.com',
+                copied: '✅ Email copied'
             }
         };
 
@@ -254,6 +279,7 @@
             document.getElementById('startBtn').textContent = t.startBtn;
             document.getElementById('retryBtn').textContent = t.retryBtn;
             document.getElementById('langSwitch').textContent = currentLang === 'zh' ? '中文 | English' : 'English | 中文';
+            document.getElementById('feedbackLink').textContent = t.feedback;
 
             // 更新当前显示的状态文案
             if (isWaiting) {
@@ -397,6 +423,16 @@
         retryBtn.addEventListener('click', function(e) {
             e.stopPropagation();
         });
+
+        function copyEmail() {
+            const t = texts[currentLang];
+            navigator.clipboard.writeText('littlet31@foxmail.com').then(() => {
+                const btn = document.getElementById('feedbackLink');
+                const original = btn.textContent;
+                btn.textContent = t.copied;
+                setTimeout(() => { btn.textContent = original; }, 1500);
+            });
+        }
 
         // 防止双击缩放（移动端）
         document.addEventListener('dblclick', function(e) {
