@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>反应速度测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 90vw;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .game-area {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .game-area.waiting {
+            background: #ff4444;
+            color: white;
+        }
+
+        .game-area.ready {
+            background: #44ff44;
+            color: white;
+        }
+
+        .game-area.result {
+            background: white;
+        }
+
+        .status-text {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .reaction-time {
+            font-size: 5rem;
+            font-weight: 700;
+            color: #44ff44;
+            margin: 1rem 0;
+        }
+
+        .animal-result {
+            font-size: 1.5rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background: #0056CC;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,122,255,0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .instructions {
+            font-size: 1rem;
+            color: #888;
+            margin-top: 1rem;
+        }
+
+        .lang-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.1);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .lang-switch:hover {
+            background: rgba(0,0,0,0.2);
+            color: #333;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .game-area {
+                padding: 2rem 1.5rem;
+            }
+
+            .reaction-time {
+                font-size: 3.5rem;
+            }
+
+            .status-text {
+                font-size: 1.5rem;
+            }
+
+            .btn {
+                padding: 0.8rem 2rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="lang-switch" id="langSwitch" onclick="toggleLanguage()">中文 | English</button>
+    <div class="container">
+        <h1 id="pageTitle">反应速度测试</h1>
+        <p class="subtitle" id="pageSubtitle">测试你的反应速度有多快！</p>
+
+        <div class="game-area" id="gameArea">
+            <div id="statusText" class="status-text">准备好开始了吗？</div>
+            <div id="reactionDisplay" class="reaction-time" style="display: none;"></div>
+            <div id="animalResult" class="animal-result" style="display: none;"></div>
+            <button class="btn" id="startBtn" onclick="startGame()">开始测试</button>
+            <button class="btn" id="retryBtn" onclick="startGame()" style="display: none;">再测一次</button>
+        </div>
+
+        <p class="instructions" id="instructions">点击"开始测试"按钮开始游戏</p>
+    </div>
+
+    <script>
+        // 中英文文案
+        const texts = {
+            zh: {
+                title: '反应速度测试',
+                subtitle: '测试你的反应速度有多快！',
+                startBtn: '开始测试',
+                retryBtn: '再测一次',
+                ready: '准备好开始了吗？',
+                waiting: '等待绿色...',
+                waitingInstructions: '不要点击！等待屏幕变绿',
+                click: '点击！',
+                clickInstructions: '快！点击屏幕！',
+                tooEarly: '太早了！',
+                tooEarlyResult: '你点击得太早了，要等屏幕变绿才能点击！',
+                tooEarlyInstructions: '点击"再测一次"重新开始',
+                resultTime: '你的反应时间是：',
+                retryInstructions: '点击"再测一次"重新挑战',
+                defaultInstructions: '点击"开始测试"按钮开始游戏',
+                cheetah: '你不是人，你是液体的。',
+                cat: '电竞选手水平，可以打职业了。',
+                eagle: '眼疾手快，超出平均水平。',
+                human: '普通反应，继续加油。',
+                sloth: '你是不是在喝茶的时候点的？'
+            },
+            en: {
+                title: 'Reaction Speed Test',
+                subtitle: 'Test how fast your reaction is!',
+                startBtn: 'Start Test',
+                retryBtn: 'Try Again',
+                ready: 'Ready to start?',
+                waiting: 'Wait for green...',
+                waitingInstructions: 'Don\'t click! Wait for the screen to turn green',
+                click: 'Click!',
+                clickInstructions: 'Quick! Click the screen!',
+                tooEarly: 'Too early!',
+                tooEarlyResult: 'You clicked too early! Wait for the screen to turn green!',
+                tooEarlyInstructions: 'Click "Try Again" to restart',
+                resultTime: 'Your reaction time is:',
+                retryInstructions: 'Click "Try Again" to challenge again',
+                defaultInstructions: 'Click "Start Test" button to begin',
+                cheetah: 'You\'re not human. You\'re liquid.',
+                cat: 'Pro gamer level. Time to go competitive.',
+                eagle: 'Sharp reflexes. Above average.',
+                human: 'Average reaction. Keep practicing.',
+                sloth: 'Were you sipping tea when you clicked?'
+            }
+        };
+
+        // 检测浏览器语言
+        function detectLanguage() {
+            const lang = navigator.language || navigator.userLanguage;
+            return lang.startsWith('zh') ? 'zh' : 'en';
+        }
+
+        let currentLang = detectLanguage();
+
+        // 切换语言
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            updateTexts();
+        }
+
+        // 更新所有文案
+        function updateTexts() {
+            const t = texts[currentLang];
+            document.getElementById('pageTitle').textContent = t.title;
+            document.getElementById('pageSubtitle').textContent = t.subtitle;
+            document.getElementById('startBtn').textContent = t.startBtn;
+            document.getElementById('retryBtn').textContent = t.retryBtn;
+            document.getElementById('langSwitch').textContent = currentLang === 'zh' ? '中文 | English' : 'English | 中文';
+
+            // 更新当前显示的状态文案
+            if (isWaiting) {
+                statusText.textContent = t.waiting;
+                instructions.textContent = t.waitingInstructions;
+            } else if (isReady) {
+                statusText.textContent = t.click;
+                instructions.textContent = t.clickInstructions;
+            } else if (isGameOver) {
+                // 如果游戏结束，保持当前显示
+            } else {
+                statusText.textContent = t.ready;
+                instructions.textContent = t.defaultInstructions;
+            }
+        }
+
+        let gameArea = document.getElementById('gameArea');
+        let statusText = document.getElementById('statusText');
+        let reactionDisplay = document.getElementById('reactionDisplay');
+        let animalResult = document.getElementById('animalResult');
+        let startBtn = document.getElementById('startBtn');
+        let retryBtn = document.getElementById('retryBtn');
+        let instructions = document.getElementById('instructions');
+
+        let startTime = 0;
+        let timeoutId = null;
+        let isWaiting = false;
+        let isReady = false;
+        let isGameOver = false;
+
+        function startGame() {
+            const t = texts[currentLang];
+
+            // 重置状态
+            gameArea.classList.remove('waiting', 'ready', 'result');
+            reactionDisplay.style.display = 'none';
+            animalResult.style.display = 'none';
+            startBtn.style.display = 'none';
+            retryBtn.style.display = 'none';
+
+            // 设置为等待状态
+            gameArea.classList.add('waiting');
+            statusText.textContent = t.waiting;
+            instructions.textContent = t.waitingInstructions;
+
+            isWaiting = true;
+            isReady = false;
+            isGameOver = false;
+
+            // 随机1-5秒后变绿
+            let delay = Math.random() * 4000 + 1000; // 1000-5000ms
+            timeoutId = setTimeout(() => {
+                if (isWaiting) {
+                    gameArea.classList.remove('waiting');
+                    gameArea.classList.add('ready');
+                    statusText.textContent = t.click;
+                    instructions.textContent = t.clickInstructions;
+
+                    startTime = Date.now();
+                    isWaiting = false;
+                    isReady = true;
+                }
+            }, delay);
+        }
+
+        function handleClick() {
+            const t = texts[currentLang];
+
+            if (isWaiting) {
+                // 点击太早了
+                clearTimeout(timeoutId);
+                gameArea.classList.remove('waiting');
+                gameArea.classList.add('result');
+                statusText.textContent = t.tooEarly;
+                reactionDisplay.textContent = '❌';
+                reactionDisplay.style.display = 'block';
+                reactionDisplay.style.color = '#ff4444';
+                animalResult.textContent = t.tooEarlyResult;
+                animalResult.style.display = 'block';
+                instructions.textContent = t.tooEarlyInstructions;
+
+                isWaiting = false;
+                isReady = false;
+                isGameOver = true;
+
+                retryBtn.style.display = 'inline-block';
+            } else if (isReady) {
+                // 计算反应时间
+                let reactionTime = Date.now() - startTime;
+                clearTimeout(timeoutId);
+
+                gameArea.classList.remove('ready');
+                gameArea.classList.add('result');
+                statusText.textContent = t.resultTime;
+                reactionDisplay.textContent = reactionTime + 'ms';
+                reactionDisplay.style.display = 'block';
+                reactionDisplay.style.color = '#44ff44';
+
+                // 根据反应时间显示动物
+                let animal = getAnimal(reactionTime);
+                animalResult.textContent = animal.text;
+                animalResult.style.display = 'block';
+                instructions.textContent = t.retryInstructions;
+
+                isReady = false;
+                isGameOver = true;
+
+                retryBtn.style.display = 'inline-block';
+            }
+        }
+
+        function getAnimal(time) {
+            const t = texts[currentLang];
+            if (time <= 180) {
+                return { text: t.cheetah };
+            } else if (time <= 250) {
+                return { text: t.cat };
+            } else if (time <= 320) {
+                return { text: t.eagle };
+            } else if (time <= 450) {
+                return { text: t.human };
+            } else {
+                return { text: t.sloth };
+            }
+        }
+
+        // 添加点击事件监听
+        gameArea.addEventListener('click', function(e) {
+            // 如果点击的是按钮，不处理
+            if (e.target.classList.contains('btn')) {
+                return;
+            }
+            handleClick();
+        });
+
+        // 阻止按钮点击事件冒泡
+        startBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        retryBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        // 防止双击缩放（移动端）
+        document.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+        });
+
+        // 初始化语言
+        updateTexts();
+    </script>
+</body>
+</html>
